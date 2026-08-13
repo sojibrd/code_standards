@@ -22,7 +22,7 @@ export type Doc = {
   route: string;
   /** First `# heading` in the file, falling back to the file name. */
   title: string;
-  /** Top-level folder, or null for root-level files. */
+  /** Immediate parent folder, or null for root-level files. */
   section: string | null;
 };
 
@@ -70,7 +70,8 @@ export function getDocs(): Doc[] {
 
   const docs = files.map<Doc>((file) => {
     const slug = slugFor(file);
-    const section = file.includes("/") ? file.split("/")[0] : null;
+    const parts = file.split("/");
+    const section = parts.length > 1 ? parts[parts.length - 2] : null;
     return {
       file,
       slug,
@@ -124,8 +125,9 @@ export function getLinkMap(): Record<string, string> {
   for (const doc of getDocs()) {
     map[doc.file.toLowerCase()] = doc.route;
     // Folder links such as `../ember/` should land on that folder's doc.
-    if (doc.section && doc.file.toLowerCase().endsWith("/rules.md")) {
-      map[doc.section.toLowerCase()] = doc.route;
+    if (doc.file.toLowerCase().endsWith("/rules.md")) {
+      const dir = doc.file.split("/").slice(0, -1).join("/").toLowerCase();
+      map[dir] = doc.route;
     }
   }
   return map;
